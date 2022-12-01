@@ -52,6 +52,9 @@ jobs:
           store-path: ${{ steps.setup-haskell.outputs.cabal-store }}
           threads: 16
           archive-uri: ${{ secrets.BINARY_CACHE_URI }}
+          host-name: s3.us-west-004.backblazeb2.com
+          host-port: 443
+          host-ssl: "True"
           skip: "${{ secrets.BINARY_CACHE_URI == '' }}"
 
       - name: Cabal cache over HTTPS
@@ -61,7 +64,6 @@ jobs:
           store-path: ${{ steps.setup-haskell.outputs.cabal-store }}
           threads: 16
           archive-uri: https://cache.haskellworks.io/archive
-          skip: "${{ secrets.BINARY_CACHE_URI != '' }}"
 
       - name: Build
         run: cabal build all --enable-tests --enable-benchmarks
