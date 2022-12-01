@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghc: ["9.4.2", "9.2.4", "9.0.2", "8.10.7", "8.8.4", "8.6.5"]
+        ghc: ["9.4.2", "9.2.4", "9.0.2", "8.10.7", "8.8.4"]
         os: [ubuntu-latest, macOS-latest, windows-latest]
         exclude:
         - os: windows-latest
@@ -30,14 +30,16 @@ jobs:
         id: setup-haskell
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: 3.6.2.0
+          cabal-version: 3.8.1.0
 
       - name: Set some window specific things
         if: matrix.os == 'windows-latest'
         run: echo 'EXE_EXT=.exe' >> $GITHUB_ENV
 
       - name: Configure project
-        run: cabal configure --enable-tests --enable-benchmarks --write-ghc-environment-files=ghc8.4.4+
+        run: |
+          cabal configure --enable-tests --enable-benchmarks --write-ghc-environment-files=ghc8.4.4+
+          cabal build all --enable-tests --enable-benchmarks --dry-run
 
       - name: Cabal cache over S3
         uses: action-works/cabal-cache-s3@v1
@@ -50,6 +52,9 @@ jobs:
           store-path: ${{ steps.setup-haskell.outputs.cabal-store }}
           threads: 16
           archive-uri: ${{ secrets.BINARY_CACHE_URI }}
+          host-name: s3.us-west-004.backblazeb2.com
+          host-port: 443
+          host-ssl: "True"
           skip: "${{ secrets.BINARY_CACHE_URI == '' }}"
 
       - name: Cabal cache over HTTPS
@@ -59,7 +64,6 @@ jobs:
           store-path: ${{ steps.setup-haskell.outputs.cabal-store }}
           threads: 16
           archive-uri: https://cache.haskellworks.io/archive
-          skip: "${{ secrets.BINARY_CACHE_URI != '' }}"
 
       - name: Build
         run: cabal build all --enable-tests --enable-benchmarks
